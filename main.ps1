@@ -63,9 +63,11 @@ function Get-SPLists {
   [Parameter(Mandatory = $false)]
   [Object] $sites,
   [Parameter(Mandatory = $false)]
-  [String] $siteName
-
+  [String] $siteName,
+  [Parameter(Mandatory = $false)]
+  [String] $listName
  )
+
 $siteslists = @()
 if ($sites) {
 foreach ($site in $sites) {
@@ -80,13 +82,22 @@ foreach ($site in $sites) {
   }
 }else{
   $sitelists = (Invoke-RestMethod -Uri "https://graph.microsoft.com/v1.0/sites/$($site.Id)/lists" -Headers $authHeader).value
+  if ($listName){
+    $sitelists | Where-Object {$_.displayName -eq $listName}
+    break
+  }
     $siteslists += $sitelists
 }
 $siteslists
 }
 }elseif ($siteName) {
   $sites = Get-SPSites  -token $token -siteName $siteName
-  Get-SPLists $token -sites $sites
+  if ($listName) {
+    Get-SPLists $token -sites $sites -listName $listName
+  }else{
+    Get-SPLists $token -sites $sites
+  }
+  
 }
 }
 
@@ -123,8 +134,21 @@ function New-SPListFromCSV {
     }
     $siteId = (Get-SPSites  -token $token  -siteName $siteName).id
     $endpointURI = "https://graph.microsoft.com/v1.0/sites/" + $siteId + "/lists"
-    $createListRequest = Invoke-RestMethod -Uri $endpointURI  -Method Post -Headers $authHeader -Body $body -ContentType 'application/json'
+    Invoke-RestMethod -Uri $endpointURI  -Method Post -Headers $authHeader -Body $body -ContentType 'application/json'
   }
+
+function Add-EntrysToSPList {
+  param(
+    [Parameter(Mandatory = $true)]
+    [String] $token,
+    [Parameter(Mandatory = $true)]
+    [String] $siteName,
+    [Parameter(Mandatory = $true)]
+    [String] $listName,
+    [Parameter(Mandatory = $true)]
+    [String] $csvFilePath
+    )
+}
 
 $token = Get-GraphToken -appID $appID -clientSecret $clientSecret -tenantID $tenantID
 $sites = Get-SPSites -token $token 
@@ -132,8 +156,10 @@ $sites
 #-siteName "Team Site"
 $sitesLists = Get-SPLists -token $token -siteName "Team Site"
 $sitesLists.Count
-$body = New-SPListFromCSV -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\Security Onion - DNS - Query.csv"
-
+#$body = New-SPListFromCSV -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\Security Onion - DNS - Query.csv"
+$list = Get-SPLists  -token $token  -siteName "Team Site" -listName "Security Onion - DNS - Query"
+$list.Count
+$list
 <#
 
 # Get all the lists of a specific site and list their id, names and webUrl
