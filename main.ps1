@@ -1,5 +1,3 @@
-# Import the necessary modules
-#Import-Module -Name Microsoft.Graph.Authentication
 .\variables.ps1
 
 
@@ -92,12 +90,49 @@ $siteslists
 }
 }
 
+function New-SPListFromCSV {
+  param(
+    [Parameter(Mandatory = $true)]
+    [String] $token,
+    [Parameter(Mandatory = $true)]
+    [String] $siteName,
+    [Parameter(Mandatory = $false)]
+    [String] $listName,
+    [Parameter(Mandatory = $True)]
+    [String] $csvFilePath
+  )
+    $list = Import-CSV -Path $csvFilePath -Encoding UTF8
+
+    if (!$listname)
+    {
+      $filenameWithoutExtension = [IO.Path]::GetFileNameWithoutExtension($csvFilePath)
+      $listname = $filenameWithoutExtension
+    }
+    $body = '{
+      "displayName": "' + $listname + '",
+      "columns": ['
+    foreach ($column in $list[0].psobject.properties) {
+        $body += '{ "name" : "' + $column.Name + '", "text" : {} },'
+    }
+    $body += '],
+      }'
+
+    $authHeader = @{
+      'Content-Type'='application\json'
+      'Authorization'="Bearer $token"
+    }
+    $siteId = (Get-SPSites  -token $token  -siteName $siteName).id
+    $endpointURI = "https://graph.microsoft.com/v1.0/sites/" + $siteId + "/lists"
+    $createListRequest = Invoke-RestMethod -Uri $endpointURI  -Method Post -Headers $authHeader -Body $body -ContentType 'application/json'
+  }
+
 $token = Get-GraphToken -appID $appID -clientSecret $clientSecret -tenantID $tenantID
 $sites = Get-SPSites -token $token 
 $sites
 #-siteName "Team Site"
 $sitesLists = Get-SPLists -token $token -siteName "Team Site"
 $sitesLists.Count
+$body = New-SPListFromCSV -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\Security Onion - DNS - Query.csv"
 
 <#
 
