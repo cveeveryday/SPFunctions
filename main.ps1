@@ -97,7 +97,6 @@ $siteslists
   }else{
     Get-SPLists $token -sites $sites
   }
-  
 }
 }
 
@@ -153,73 +152,12 @@ function Add-EntrysToSPList {
 $token = Get-GraphToken -appID $appID -clientSecret $clientSecret -tenantID $tenantID
 $sites = Get-SPSites -token $token 
 $sites
-#-siteName "Team Site"
 $sitesLists = Get-SPLists -token $token -siteName "Team Site"
 $sitesLists.Count
 #$body = New-SPListFromCSV -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\Security Onion - DNS - Query.csv"
 $list = Get-SPLists  -token $token  -siteName "Team Site" -listName "Security Onion - DNS - Query"
 $list.Count
 $list
-<#
-
-# Get all the lists of a specific site and list their id, names and webUrl
-$sites.value | ForEach-Object {
-    
-            $siteId = $_."id"
-            $endpointURI = "https://graph.microsoft.com/v1.0/sites/" + $siteId + "/lists"
-            $lists = Invoke-RestMethod -Uri $endpointURI -Headers $authHeader
-            $lists.value | Select-Object -Property Id, Name, webUrl
-    
-<#for ($i = 31; $i -lt 60; $i++) {
-    Write-Host "Iteration number: $i"
-    $listTitle = "List" + $i
-    $body = '{
-        "displayName": "' + $listTitle + '",
-        "description": "Discover teams to join in Office 365 for IT Pros",
-        "columns": [
-          {
-            "name": "Deeplink",
-            "description": "Link to access the team",
-            "text": { }
-        },{
-            "name": "Description",
-            "description": "Purpose of the team",
-            "text": { }
-          },
-          {
-            "name": "Owner",
-            "description": "Team owner",
-            "text": { }
-          },      
-          {
-            "name": "OwnerSMTP",
-            "description": "Primary SMTP address for owner",
-            "text": { }
-          },
-          {
-            "name": "Members",
-            "description": "Number of tenant menbers",
-            "number": { }
-          },
-          {
-            "name": "ExternalGuests",
-            "description": "Number of external guest menbers",
-            "number": { }
-          },
-          {
-            "name": "Access",
-            "description": "Public or Private access",
-            "text": { }
-          },
-        ],
-      }'
-
-# Create a new SharePoint list using the Microsoft Graph API
-
-
-$createListRequest = Invoke-RestMethod -Uri $endpointURI  -Method Post -Headers $authHeader -Body $body -ContentType 'application/json'
-$createListRequest
-}#>
 
 
 
