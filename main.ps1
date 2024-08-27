@@ -115,11 +115,10 @@ function New-SPListFromCSV {
 
     if (!$listname)
     {
-      $filenameWithoutExtension = [IO.Path]::GetFileNameWithoutExtension($csvFilePath)
-      $listname = $filenameWithoutExtension
+      $listname = Get-ListNameFromCSVFileName -csvFilePath $csvFilePath
     }
     $body = '{
-      "displayName": "' + $listname + '",
+      "displayName": "' + ($listname -replace '\s', '') + '",
       "columns": ['
     foreach ($column in $list[0].psobject.properties) {
         $body += '{ "name" : "' + $column.Name + '", "text" : {} },'
@@ -136,28 +135,63 @@ function New-SPListFromCSV {
     Invoke-RestMethod -Uri $endpointURI  -Method Post -Headers $authHeader -Body $body -ContentType 'application/json'
   }
 
-function Add-EntrysToSPList {
+function Add-CSVToSPList {
   param(
     [Parameter(Mandatory = $true)]
     [String] $token,
     [Parameter(Mandatory = $true)]
     [String] $siteName,
     [Parameter(Mandatory = $true)]
-    [String] $listName,
-    [Parameter(Mandatory = $true)]
     [String] $csvFilePath
     )
+    $listname = Get-ListNameFromCSVFileName -csvFilePath $csvFilePath
+    $list = Get-SPLists -token $token  -siteName $siteName -listName $listName
+    If ($list)
+      {
+      $listId = $list.id
+      $authHeader = @{
+        'Content-Type'='application\json'
+        'Authorization'="Bearer $token"
+      }
+      $siteId = (Get-SPSites  -token $token  -siteName $siteName).id
+      $endpointURI = "https://graph.microsoft.com/v1.0/sites/" + $siteId + "/lists/" + $listId + "/items"
+      $csvFile = Import-Csv -Path $csvFilePath -Encoding 'UTF8'
+      foreach ($row in $csvFile)
+      {
+        $body = '{ "fields": {'
+        foreach ($column in $row.psobject.properties)
+        {
+          $body += '"' + $column.name + '": "' + $column.Value + '",'
+        }
+        $body = $body.TrimEnd(',') + '} }'
+        Invoke-RestMethod -Uri $endpointURI   -Method Post  -Headers $authHeader  -Body $body  -ContentType 'application/json'
+      }
+    }
 }
 
+function Get-ListNameFromCSVFileName {
+  param (
+    [Parameter(Mandatory = $true)]
+    [String] $csvFilePath
+  )
+  
+  $filenameWithoutExtension = [IO.Path]::GetFileNameWithoutExtension($csvFilePath)
+  ($filenameWithoutExtension -replace '[\W_]+', '')
+
+}
+
+
 $token = Get-GraphToken -appID $appID -clientSecret $clientSecret -tenantID $tenantID
-$sites = Get-SPSites -token $token 
-$sites
-$sitesLists = Get-SPLists -token $token -siteName "Team Site"
-$sitesLists.Count
+#$sites = Get-SPSites -token $token 
+#$sites
+#$sitesLists = Get-SPLists -token $token -siteName "Team Site"
+#$sitesLists.Count
 #$body = New-SPListFromCSV -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\Security Onion - DNS - Query.csv"
-$list = Get-SPLists  -token $token  -siteName "Team Site" -listName "Security Onion - DNS - Query"
-$list.Count
-$list
+#$body
+#$list = Get-SPLists  -token $token  -siteName "Team Site" -listName "Security Onion - DNS - Query"
+#$list.Count
+#$list
+Add-CSVToSPList -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\Security Onion - DNS - Query.csv"
 
 
 
