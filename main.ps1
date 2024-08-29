@@ -121,7 +121,7 @@ function New-SPListFromCSV {
       "displayName": "' + ($listname -replace '\s', '') + '",
       "columns": ['
     foreach ($column in $list[0].psobject.properties) {
-        $body += '{ "name" : "' + $column.Name + '", "text" : {} },'
+        $body += '{ "name" : "' + ($column.Name -replace '\s', '') + '", "text" : {} },'
     }
     $body += '],
       }'
@@ -161,7 +161,8 @@ function Add-CSVToSPList {
         $body = '{ "fields": {'
         foreach ($column in $row.psobject.properties)
         {
-          $body += '"' + $column.name + '": "' + $column.Value + '",'
+          $value = $column.Value -replace('"', '\"')
+          $body += '"' + ($column.Name -replace '\s', '')  + '": "' + $column.Value + '",'
         }
         $body = $body.TrimEnd(',') + '} }'
         Invoke-RestMethod -Uri $endpointURI   -Method Post  -Headers $authHeader  -Body $body  -ContentType 'application/json'
@@ -186,12 +187,12 @@ $token = Get-GraphToken -appID $appID -clientSecret $clientSecret -tenantID $ten
 #$sites
 #$sitesLists = Get-SPLists -token $token -siteName "Team Site"
 #$sitesLists.Count
-#$body = New-SPListFromCSV -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\Security Onion - DNS - Query.csv"
+$body = New-SPListFromCSV -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\vehiclemakes.csv"
 #$body
 #$list = Get-SPLists  -token $token  -siteName "Team Site" -listName "Security Onion - DNS - Query"
 #$list.Count
 #$list
-Add-CSVToSPList -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\Security Onion - DNS - Query.csv"
+Add-CSVToSPList -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\vehiclemakes.csv"
 
 
 
