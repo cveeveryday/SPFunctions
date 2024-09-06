@@ -56,6 +56,50 @@ If (!$sites.count -gt 0) {
 
 }
 
+function Grant-SPSelectedSitePermissions {
+  param (
+    [Parameter(Mandatory = $true)]
+    [String] $token,
+    [Parameter(Mandatory = $true)]
+    [String] $siteId,
+    [Parameter(Mandatory = $true)]
+    [string] $appClientId,
+    [Parameter(Mandatory = $true)]
+    [String] $appDisplayName
+  )
+$authHeader = @{
+  'Content-Type'='application\json'
+  'Authorization'="Bearer $token"
+}
+
+
+$url = "https://graph.microsoft.com/v1.0/sites/$siteId/permissions"
+
+$permissions = @(
+  @{Permission="Sites.Read"},
+  @{Permission="Sites.Write"},
+  @{Permission="Sites.Manage"},
+  @{Permission="Sites.FullControl"}
+)
+ForEach ($permission in $permissions) {
+
+$body = '{
+  "roles": [' + $permission.Permission + '],
+  "grantedToIdentities": [{
+     "application": {
+       "id": "' + $appClientId + '",
+       "displayName": "' + $appDisplayName + '"
+       }
+       }]
+       }'
+  
+      $response = Invoke-RestMethod -Uri $url -Headers $authHeader -Method Post -Body $body -ContentType 'application\json'
+      $response.Value
+}
+
+}
+
+
 function Get-SPLists {
  param (
   [Parameter(Mandatory = $true)]
@@ -69,12 +113,12 @@ function Get-SPLists {
  )
 
 $siteslists = @()
+$authHeader = @{
+  'Content-Type'='application\json'
+  'Authorization'="Bearer $token"
+}
 if ($sites) {
 foreach ($site in $sites) {
-  $authHeader = @{
-    'Content-Type'='application\json'
-    'Authorization'="Bearer $token"
-  }
   if ($siteName) {
     if ($siteName -eq $site.Name) {
     (Invoke-RestMethod -Uri "https://graph.microsoft.com/v1.0/sites/$($site.Id)/lists" -Headers $authHeader).value
@@ -187,12 +231,14 @@ $token = Get-GraphToken -appID $appID -clientSecret $clientSecret -tenantID $ten
 #$sites
 #$sitesLists = Get-SPLists -token $token -siteName "Team Site"
 #$sitesLists.Count
-$body = New-SPListFromCSV -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\vehiclemakes.csv"
+$siteId = (Get-SPSite -name "Team Site").Id
+$response = Grant-SPSelectedSitePermissions -token $token -siteId $siteId -appClientId $appClientId -appDisplayName $appDisplayName
+$body = New-SPListFromCSV -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\1810000402_MetaData.csv"
 #$body
 #$list = Get-SPLists  -token $token  -siteName "Team Site" -listName "Security Onion - DNS - Query"
 #$list.Count
 #$list
-Add-CSVToSPList -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\vehiclemakes.csv"
+Add-CSVToSPList -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\1810000402_MetaData.csv"
 
 
 
