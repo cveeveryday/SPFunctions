@@ -227,18 +227,19 @@ function Get-ListNameFromCSVFileName {
 
 
 $token = Get-GraphToken -appID $appID -clientSecret $clientSecret -tenantID $tenantID
-#$sites = Get-SPSites -token $token 
+$sites = Get-SPSites -token $token 
+$sites.count
 #$sites
 #$sitesLists = Get-SPLists -token $token -siteName "Team Site"
 #$sitesLists.Count
-$siteId = (Get-SPSite -name "Team Site").Id
-$response = Grant-SPSelectedSitePermissions -token $token -siteId $siteId -appClientId $appClientId -appDisplayName $appDisplayName
-$body = New-SPListFromCSV -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\1810000402_MetaData.csv"
+#$siteId = (Get-SPSites -name "Team Site").Id
+#$response = Grant-SPSelectedSitePermissions -token $token -siteId $siteId -appClientId $appClientId -appDisplayName $appDisplayName
+#$body = New-SPListFromCSV -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\1810000402_MetaData.csv"
 #$body
 #$list = Get-SPLists  -token $token  -siteName "Team Site" -listName "Security Onion - DNS - Query"
 #$list.Count
 #$list
-Add-CSVToSPList -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\1810000402_MetaData.csv"
+#Add-CSVToSPList -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\1810000402_MetaData.csv"
 
 
 
