@@ -179,6 +179,34 @@ function New-SPListFromCSV {
     Invoke-RestMethod -Uri $endpointURI  -Method Post -Headers $authHeader -Body $body -ContentType 'application/json'
   }
 
+  function New-SPListFromObject {
+    param(
+      [Parameter(Mandatory = $true)]
+      [String] $token,
+      [Parameter(Mandatory = $true)]
+      [String] $siteName,
+      [Parameter(Mandatory = $true)]
+      [String] $listName,
+      [Parameter(Mandatory = $True)]
+      [String[]] $colunmns
+      )
+    $body = '{
+      "displayName": "' + ($listname -replace '\s', '') + '",
+      "columns": ['
+      foreach ($column in $colunmns) {
+      $body  += '{ "name" : "' + ($column -replace '\s', '') + '", "text": {} },'
+      }
+        $body += '],
+        }'
+        $authHeader = @{
+          'Content-Type'='application\json'
+          'Authorization'="Bearer $token"
+        }
+        $siteId = (Get-SPSites  -token $token  -siteName $siteName).id
+        $endpointURI = "https://graph.microsoft.com/v1.0/sites/" + $siteId + "/lists"
+        Invoke-RestMethod -Uri $endpointURI  -Method Post -Headers $authHeader -Body $body -ContentType 'application/json'
+  }
+
 function Add-CSVToSPList {
   param(
     [Parameter(Mandatory = $true)]
@@ -235,6 +263,7 @@ $sites.count
 #$siteId = (Get-SPSites -name "Team Site").Id
 #$response = Grant-SPSelectedSitePermissions -token $token -siteId $siteId -appClientId $appClientId -appDisplayName $appDisplayName
 #$body = New-SPListFromCSV -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\1810000402_MetaData.csv"
+New-SPListFromObject -token $token -siteName "Team Site" -listName "Patty's Emails" -colunmns @("From","To","DateReceived","Subject","Body")
 #$body
 #$list = Get-SPLists  -token $token  -siteName "Team Site" -listName "Security Onion - DNS - Query"
 #$list.Count
