@@ -127,7 +127,7 @@ foreach ($site in $sites) {
 }else{
   $sitelists = (Invoke-RestMethod -Uri "https://graph.microsoft.com/v1.0/sites/$($site.Id)/lists" -Headers $authHeader).value
   if ($listName){
-    $sitelists | Where-Object {$_.displayName -eq $listName}
+    $sitelists | Where-Object {$_.name -eq $listName}
     break
   }
     $siteslists += $sitelists
@@ -253,6 +253,66 @@ function Get-ListNameFromCSVFileName {
 
 }
 
+function Update-SPListColumnName {
+param(
+  [Parameter(Mandatory = $true)]
+  [String]$token,
+  [Parameter(Mandatory = $true)]
+  [String]$siteName,
+  [Parameter(Mandatory = $true)]
+  [String]$listName,
+  [Parameter(Mandatory = $true)]
+  [String]$OldColumnName,
+  [Parameter(Mandatory = $true)]
+  [String]$NewColumnName
+)
+$body = '{ "displayName": "' + $NewColumnName + '", "name": "'+ $NewColumnName + '"}'
+$siteId = (Get-SPSites  -token $token  -siteName $siteName).id
+$listId = (Get-SPLists -token $token  -siteName $siteName -listName $listName).id
+
+$authHeader = @{
+  'Content-Type'='application\json'
+  'Authorization'="Bearer $token"
+}
+$endpointURI = "https://graph.microsoft.com/v1.0/sites/" + $siteId + "/lists/" + $listId + "/columns/" + $OldColumnName
+Invoke-RestMethod -Uri $endpointURI -Method Patch   -Headers $authHeader   -Body $body   -ContentType 'application/json'
+}
+
+function Update-SPListColumnType {
+  param(
+    [Parameter(Mandatory = $true)]
+  [String]$token,
+  [Parameter(Mandatory = $true)]
+  [String]$siteName,
+  [Parameter(Mandatory = $true)]
+  [String]$listName,
+  [Parameter(Mandatory = $true)]
+  [String]$ColumnName,
+  [Parameter(Mandatory = $true)]
+  [String]$ColumnType
+  )
+
+  switch ($ColumnType) {
+    "dateTime" { $body = '{ 
+                            "columnType": "dateTime",
+                            "dateTime": {
+                              "displayAs": "standard",
+                              "format": "dateTime"
+                              }  
+                          }' }
+  }
+$siteId = (Get-SPSites  -token $token  -siteName $siteName).id
+$listId = (Get-SPLists -token $token  -siteName $siteName -listName $listName).id
+
+$authHeader = @{
+  'Content-Type'='application\json'
+  'Authorization'="Bearer $token"
+}
+$endpointURI = "https://graph.microsoft.com/v1.0/sites/" + $siteId + "/lists/" + $listId + "/columns/" + $ColumnName
+Invoke-RestMethod -Uri $endpointURI -Method Patch -Headers $authHeader   -Body $body   -ContentType 'application/json'
+
+}
+
 
 $token = Get-GraphToken -appID $appID -clientSecret $clientSecret -tenantID $tenantID
 $sites = Get-SPSites -token $token 
@@ -263,7 +323,9 @@ $sites.count
 #$siteId = (Get-SPSites -name "Team Site").Id
 #$response = Grant-SPSelectedSitePermissions -token $token -siteId $siteId -appClientId $appClientId -appDisplayName $appDisplayName
 #$body = New-SPListFromCSV -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\1810000402_MetaData.csv"
-New-SPListFromObject -token $token -siteName "Team Site" -listName "Patty's Emails" -colunmns @("From","To","DateReceived","Subject","Body")
+#New-SPListFromObject -token $token -siteName "Team Site" -listName "Patty's Emails" -colunmns @("From","To","DateReceived","Subject","Body","isRead") 
+#Update-SPListColumnName -token $token -siteName "Team Site" -listName "PattysEmails" -OldColumnName "Title" -NewColumnName "Subject"
+Update-SPListColumnType -token $token -siteName "Team Site" -listName "PattysEmails" -ColumnName "DateReceived" -ColumnType "dateTime"
 #$body
 #$list = Get-SPLists  -token $token  -siteName "Team Site" -listName "Security Onion - DNS - Query"
 #$list.Count
