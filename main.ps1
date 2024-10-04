@@ -187,17 +187,19 @@ function New-SPListFromCSV {
       [String] $siteName,
       [Parameter(Mandatory = $true)]
       [String] $listName,
-      [Parameter(Mandatory = $True)]
+      [Parameter(Mandatory = $false)]
       [String[]] $colunmns
       )
     $body = '{
-      "displayName": "' + ($listname -replace '\s', '') + '",
-      "columns": ['
+      "displayName": "' + ($listname -replace '\s', '') + '"'
+      if ($colunmns) {
+      $body += ',"columns": ['
       foreach ($column in $colunmns) {
       $body  += '{ "name" : "' + ($column -replace '\s', '') + '", "text": {} },'
       }
-        $body += '],
-        }'
+        $body += '],'
+    }
+       $body += '}'
         $authHeader = @{
           'Content-Type'='application\json'
           'Authorization'="Bearer $token"
@@ -252,6 +254,68 @@ function Get-ListNameFromCSVFileName {
   ($filenameWithoutExtension -replace '[\W_]+', '')
 
 }
+
+function Add-SPListColumn{
+ param (
+   [Parameter(Mandatory = $true)]
+   [String] $token,
+   [Parameter(Mandatory = $true)]
+   [String] $siteName,
+   [Parameter(Mandatory = $true)]
+   [String] $listName,
+   [Parameter(Mandatory = $true)]
+   [String] $columnName,
+   [Parameter(Mandatory = $false)]
+   [String] $columnType = 'Text'
+ )
+    $siteId = (Get-SPSites  -token $token  -siteName $siteName).id
+    $listId = (Get-SPLists -token $token  -siteName $siteName -listName $listName).id
+    switch ($columnType) {
+      "Text" { $body = '{
+                          "enforceUniqueValues": false,
+                          "hidden": false,
+                          "indexed": false,
+                          "name": "'  + $columnName  +  '",
+                          "text": {
+                          "allowMultipleLines": false,
+                          "appendChangesToExistingText": false,
+                          "linesForEditing": 0,
+                          "maxLength": 255
+                          }
+                        }'
+              }
+      "multilineText" { $body = '{
+                          "enforceUniqueValues": false,
+                          "hidden": false,
+                          "indexed": false,
+                          "name": "'  + $columnName  +  '",
+                          "text": {
+                          "allowMultipleLines": true,
+                          "linesForEditing": 6,
+                          "maxLength": 63999
+                          }
+                        }'
+                     }
+      "dateTime" { $body = '{
+                            "enforceUniqueValues": false,
+                            "hidden": false,
+                            "indexed": false,
+                            "name": "'  + $columnName  +  '",
+                            "dateTime": {
+                            "displayAs": "standard",
+                            "format": "dateTime"
+                              }
+                            }'
+                  }
+                }
+      $authHeader = @{
+        'Content-Type'='application\json'
+        'Authorization'="Bearer $token"
+      }
+      $endpointURI = "https://graph.microsoft.com/v1.0/sites/" + $siteId + "/lists/" + $listId + "/columns/"
+      Invoke-RestMethod -Uri $endpointURI -Method Post -Headers $authHeader -Body $body -ContentType 'application/json'
+}
+    
 
 function Update-SPListColumnName {
 param(
@@ -323,9 +387,13 @@ $sites.count
 #$siteId = (Get-SPSites -name "Team Site").Id
 #$response = Grant-SPSelectedSitePermissions -token $token -siteId $siteId -appClientId $appClientId -appDisplayName $appDisplayName
 #$body = New-SPListFromCSV -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\1810000402_MetaData.csv"
-#New-SPListFromObject -token $token -siteName "Team Site" -listName "Patty's Emails" -colunmns @("From","To","DateReceived","Subject","Body","isRead") 
-#Update-SPListColumnName -token $token -siteName "Team Site" -listName "PattysEmails" -OldColumnName "Title" -NewColumnName "Subject"
-Update-SPListColumnType -token $token -siteName "Team Site" -listName "PattysEmails" -ColumnName "DateReceived" -ColumnType "dateTime"
+New-SPListFromObject -token $token -siteName "Team Site" -listName "Patty's Emails" #-colunmns @("From","To","DateReceived","Subject","Body","isRead") 
+Update-SPListColumnName -token $token -siteName "Team Site" -listName "PattysEmails" -OldColumnName "Title" -NewColumnName "Subject"
+Add-SPListColumn -token $token -siteName "Team Site" -listName "PattysEmails" -ColumnName "From" -ColumnType "Text"
+Add-SPListColumn -token $token -siteName "Team Site" -listName "PattysEmails" -ColumnName "To" -ColumnType "Text"
+Add-SPListColumn -token $token -siteName "Team Site" -listName "PattysEmails" -ColumnName "Body" -ColumnType "multilineText"
+Add-SPListColumn  -token $token  -siteName "Team Site"  -listName "PattysEmails"  -ColumnName "DateReceived"  -ColumnType "dateTime"
+#Update-SPListColumnType -token $token -siteName "Team Site" -listName "PattysEmails" -ColumnName "DateReceived" -ColumnType "dateTime"
 #$body
 #$list = Get-SPLists  -token $token  -siteName "Team Site" -listName "Security Onion - DNS - Query"
 #$list.Count
