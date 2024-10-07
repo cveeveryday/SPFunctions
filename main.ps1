@@ -244,6 +244,51 @@ function Add-CSVToSPList {
     }
 }
 
+Function Add-ObjectToSPList {
+  param (
+    [Parameter(Mandatory = $true)]
+    [String] $token,
+    [Parameter(Mandatory = $true)]
+    [String] $siteName,
+    [Parameter(Mandatory = $true)]
+    [String]$listName,
+    [Parameter(Mandatory = $true)]
+    [Array]$objects = @(
+      [PSCustomObject]@{
+        Title = "Title 1" ;
+        Description = "Description 1"
+        Status = "New"
+      },
+      [PSCustomObject]@{
+        Title = "Title 2"
+        Description = "Description 2"
+        Status = "Existing"
+      }
+    )
+  )
+    $list = Get-SPLists -token $token  -siteName $siteName -listName $listName
+    If ($list)
+      {
+        $listId = $list.Id
+        $authHeader = @{
+          'Content-Type'='application\json'
+          'Authorization'="Bearer $token"
+        }
+        $siteId = (Get-SPSites  -token $token  -siteName $siteName).id
+        $endpointURI = "https://graph.microsoft.com/v1.0/sites/" + $siteId + "/lists/" + $listId + "/items"
+        foreach ($object in $objects)
+        {
+          $body = '{ "fields": {'
+          foreach ($property in $object.psobject.properties)
+          {
+            $body += '"{0}": "{1}",'  -f $property.Name, $property.Value
+          }
+          $body = $body.TrimEnd(',') + '} }'
+          Invoke-RestMethod -Uri $endpointURI   -Method Post  -Headers $authHeader  -Body $body  -ContentType 'application/json'
+        }
+      }
+}
+
 function Get-ListNameFromCSVFileName {
   param (
     [Parameter(Mandatory = $true)]
@@ -377,7 +422,7 @@ Invoke-RestMethod -Uri $endpointURI -Method Patch -Headers $authHeader   -Body $
 
 }
 
-
+<#
 $token = Get-GraphToken -appID $appID -clientSecret $clientSecret -tenantID $tenantID
 $sites = Get-SPSites -token $token 
 $sites.count
@@ -401,4 +446,4 @@ Add-SPListColumn  -token $token  -siteName "Team Site"  -listName "PattysEmails"
 #Add-CSVToSPList -token $token -siteName "Team Site" -csvFilePath "C:\Users\ludov\Downloads\1810000402_MetaData.csv"
 
 
-
+#>
