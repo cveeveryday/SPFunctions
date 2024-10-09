@@ -1,4 +1,4 @@
-.\variables.ps1
+#.\variables.ps1
 
 
 function Get-GraphToken {
@@ -35,7 +35,7 @@ function Get-SPSites {
   )
 
 $authHeader = @{
-   'Content-Type'='application\json'
+   'Content-Type'='application/json'
    'Authorization'="Bearer $token"
 }
 $sites = (Invoke-RestMethod -Uri "https://graph.microsoft.com/v1.0/sites"  -Headers $authHeader).value
@@ -68,7 +68,7 @@ function Grant-SPSelectedSitePermissions {
     [String] $appDisplayName
   )
 $authHeader = @{
-  'Content-Type'='application\json'
+  'Content-Type'='application/json'
   'Authorization'="Bearer $token"
 }
 
@@ -93,7 +93,7 @@ $body = '{
        }]
        }'
   
-      $response = Invoke-RestMethod -Uri $url -Headers $authHeader -Method Post -Body $body -ContentType 'application\json'
+      $response = Invoke-RestMethod -Uri $url -Headers $authHeader -Method Post -Body $body -ContentType 'application/json'
       $response.Value
 }
 
@@ -114,7 +114,7 @@ function Get-SPLists {
 
 $siteslists = @()
 $authHeader = @{
-  'Content-Type'='application\json'
+  'Content-Type'='application/json'
   'Authorization'="Bearer $token"
 }
 if ($sites) {
@@ -171,7 +171,7 @@ function New-SPListFromCSV {
       }'
 
     $authHeader = @{
-      'Content-Type'='application\json'
+      'Content-Type'='application/json'
       'Authorization'="Bearer $token"
     }
     $siteId = (Get-SPSites  -token $token  -siteName $siteName).id
@@ -201,12 +201,12 @@ function New-SPListFromCSV {
     }
        $body += '}'
         $authHeader = @{
-          'Content-Type'='application\json'
+          'Content-Type'='application/json'
           'Authorization'="Bearer $token"
         }
         $siteId = (Get-SPSites  -token $token  -siteName $siteName).id
         $endpointURI = "https://graph.microsoft.com/v1.0/sites/" + $siteId + "/lists"
-        Invoke-RestMethod -Uri $endpointURI  -Method Post -Headers $authHeader -Body $body -ContentType 'application/json'
+        Invoke-RestMethod -Uri $endpointURI  -Method Post -Headers $authHeader -Body $body
   }
 
 function Add-CSVToSPList {
@@ -224,7 +224,7 @@ function Add-CSVToSPList {
       {
       $listId = $list.id
       $authHeader = @{
-        'Content-Type'='application\json'
+        'Content-Type'='application/json'
         'Authorization'="Bearer $token"
       }
       $siteId = (Get-SPSites  -token $token  -siteName $siteName).id
@@ -271,7 +271,7 @@ Function Add-ObjectToSPList {
       {
         $listId = $list.Id
         $authHeader = @{
-          'Content-Type'='application\json'
+          'Content-Type'='application/json'
           'Authorization'="Bearer $token"
         }
         $siteId = (Get-SPSites  -token $token  -siteName $siteName).id
@@ -354,7 +354,7 @@ function Add-SPListColumn{
                   }
                 }
       $authHeader = @{
-        'Content-Type'='application\json'
+        'Content-Type'='application/json'
         'Authorization'="Bearer $token"
       }
       $endpointURI = "https://graph.microsoft.com/v1.0/sites/" + $siteId + "/lists/" + $listId + "/columns/"
@@ -380,7 +380,7 @@ $siteId = (Get-SPSites  -token $token  -siteName $siteName).id
 $listId = (Get-SPLists -token $token  -siteName $siteName -listName $listName).id
 
 $authHeader = @{
-  'Content-Type'='application\json'
+  'Content-Type'='application/json'
   'Authorization'="Bearer $token"
 }
 $endpointURI = "https://graph.microsoft.com/v1.0/sites/" + $siteId + "/lists/" + $listId + "/columns/" + $OldColumnName
@@ -414,7 +414,7 @@ $siteId = (Get-SPSites  -token $token  -siteName $siteName).id
 $listId = (Get-SPLists -token $token  -siteName $siteName -listName $listName).id
 
 $authHeader = @{
-  'Content-Type'='application\json'
+  'Content-Type'='application/json'
   'Authorization'="Bearer $token"
 }
 $endpointURI = "https://graph.microsoft.com/v1.0/sites/" + $siteId + "/lists/" + $listId + "/columns/" + $ColumnName
