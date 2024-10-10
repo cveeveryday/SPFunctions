@@ -422,6 +422,40 @@ Invoke-RestMethod -Uri $endpointURI -Method Patch -Headers $authHeader   -Body $
 
 }
 
+function Get-SPListItems {
+  param(
+    [Parameter(Mandatory = $true)]
+    [String]$accessToken,
+    [Parameter(Mandatory = $true)]
+    [String]$siteName,
+    [Parameter(Mandatory = $true)]
+    [String]$listName,
+    [Parameter(Mandatory = $true)]
+    [String]$ColumnName,
+    [Parameter(Mandatory = $true)]
+    [String]$Filter
+  )
+
+$authHeader = @{ 
+                'Content-Type'='application/json' 
+                'Authorization'="Bearer $accessToken" 
+               }
+$list = Get-SPLists -token $token   -siteName $siteName  -listName $listName
+If ($list.count -gt 1)
+{
+  Write-Error "Multiple lists found with the name '$listName'. Aborting."
+  return $null
+}
+$uri = "https://graph.microsoft.com/v1.0/sites/" +  $list.parentreference.siteid + "/lists/"  + $list.id  + "/items"
+
+$params = @{
+  "filter"= "fields/"+ $ColumnName + " eq '" + $filter + "'"
+  "Prefer"= "HonorNonIndexedQueriesWarningMayFailRandomly"
+}
+$response = Invoke-RestMethod -Uri $uri   -Headers $authHeader -Method GET  -Body $params  -ContentType 'application/json'
+$response.value
+
+}
 <#
 $token = Get-GraphToken -appID $appID -clientSecret $clientSecret -tenantID $tenantID
 $sites = Get-SPSites -token $token 
