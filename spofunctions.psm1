@@ -436,16 +436,17 @@ function Get-SPListItems {
     [String]$Filter
   )
 
-$authHeader = @{ 
-                'Content-Type'='application/json' 
-                'Authorization'="Bearer $accessToken" 
-               }
-$list = Get-SPLists -token $token   -siteName $siteName  -listName $listName
+
+$list = Get-SPLists -token $accessToken   -siteName $siteName  -listName $listName
 If ($list.count -gt 1)
 {
   Write-Error "Multiple lists found with the name '$listName'. Aborting."
   return $null
 }
+$authHeader = @{ 
+  'Content-Type'='application/json' 
+  'Authorization'="Bearer $accessToken" 
+ }
 $uri = "https://graph.microsoft.com/v1.0/sites/" +  $list.parentreference.siteid + "/lists/"  + $list.id  + "/items"
 
 $params = @{
@@ -456,6 +457,69 @@ $response = Invoke-RestMethod -Uri $uri   -Headers $authHeader -Method GET  -Bod
 $response.value
 
 }
+
+function Get-SPListItem {
+  param (
+    [Parameter(Mandatory = $true)]
+    [String]$accessToken,
+    [Parameter(Mandatory = $true)]
+    [String]$siteName,
+    [Parameter(Mandatory = $true)]
+    [String]$listName,
+    [Parameter(Mandatory = $true)]
+    [String]$itemId
+  )
+  $list = Get-SPLists -token $accessToken   -siteName $siteName  -listName $listName
+If ($list.count -gt 1)
+{
+  Write-Error "Multiple lists found with the name '$listName'. Aborting."
+  return $null
+}
+$authHeader = @{ 
+  'Content-Type'='application/json' 
+  'Authorization'="Bearer $accessToken" 
+ }
+$uri = "https://graph.microsoft.com/v1.0/sites/" +  $list.parentreference.siteid + "/lists/"  + $list.id  + "/items/" + $itemId
+$response = Invoke-RestMethod -Uri $uri   -Headers $authHeader -Method GET -ContentType 'application/json'
+$response
+}
+
+function Update-SPListItems{
+  param(
+    [Parameter(Mandatory = $true)]
+    [String]$accessToken,
+    [Parameter(Mandatory = $true)]
+    [String]$siteName,
+    [Parameter(Mandatory = $true)]
+    [String]$listName,
+    [Parameter(Mandatory = $true)]
+    [String]$ColumnName,
+    [Parameter(Mandatory = $true)]
+    [String]$Filter,
+    [Parameter(Mandatory = $true)]
+    [String]$newValue
+  )
+  $authHeader = @{ 
+    "Content-Type"="application/json"
+    "Authorization"="Bearer $accessToken" 
+   }
+  $list = Get-SPLists -token $accessToken -siteName $siteName  -listName $listName
+  If ($list.count -gt 1)
+  {
+    Write-Error "Multiple lists found with the name '$listName'. Aborting."
+    return $null
+  }
+  $items = Get-SPListItems -accessToken $accessToken -siteName $siteName -listName $listName -ColumnName $ColumnName -Filter $Filter 
+  foreach ($item in $items) {
+    $uri = "https://graph.microsoft.com/v1.0/sites/" +  $list.parentreference.siteid + "/lists/"  + $list.id  + "/items/" + $item.id + "/fields"
+    $body = "{ '" + $ColumnName + "':'" + $newValue + "'}"
+    
+    $response  = Invoke-RestMethod -Uri $uri -Headers $authHeader  -Method PATCH -body $body
+    $response.value
+  }
+
+  
+  }
 <#
 $token = Get-GraphToken -appID $appID -clientSecret $clientSecret -tenantID $tenantID
 $sites = Get-SPSites -token $token 
