@@ -493,9 +493,11 @@ function Update-SPListItems{
     [Parameter(Mandatory = $true)]
     [String]$listName,
     [Parameter(Mandatory = $true)]
-    [String]$ColumnName,
+    [String]$ColumnNameFilter,
     [Parameter(Mandatory = $true)]
-    [String]$Filter,
+    [String]$FilterValue,
+    [Parameter(Mandatory = $true)]
+    [String]$ColumnName,
     [Parameter(Mandatory = $true)]
     [String]$newValue
   )
@@ -509,13 +511,13 @@ function Update-SPListItems{
     Write-Error "Multiple lists found with the name '$listName'. Aborting."
     return $null
   }
-  $items = Get-SPListItems -accessToken $accessToken -siteName $siteName -listName $listName -ColumnName $ColumnName -Filter $Filter 
+  $items = Get-SPListItems -accessToken $accessToken -siteName $siteName -listName $listName -ColumnName $ColumnNameFilter -Filter $FilterValue 
   foreach ($item in $items) {
     $uri = "https://graph.microsoft.com/v1.0/sites/" +  $list.parentreference.siteid + "/lists/"  + $list.id  + "/items/" + $item.id + "/fields"
     $body = "{ '" + $ColumnName + "':'" + $newValue + "'}"
     
-    $response  = Invoke-RestMethod -Uri $uri -Headers $authHeader  -Method PATCH -body $body
-    $response.value
+    $response = Invoke-RestMethod -Uri $uri -Headers $authHeader  -Method PATCH -body $body -StatusCodeVariable StatusCode
+    $StatusCode, $response
   }
 
   
