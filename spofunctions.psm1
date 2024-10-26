@@ -343,9 +343,6 @@ function Add-SPListColumn{
                              "indexed": false,
                             "name": "'   + $columnName    +   '", 
                             "number": {
-                                        "decimalPlaces": 0,
-                                        "minimum": 0,
-                                        "maximum": 10000
                                       }
                              }'
                   }
