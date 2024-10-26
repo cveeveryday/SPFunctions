@@ -329,6 +329,26 @@ function Add-SPListColumn{
                           }
                         }'
               }
+      "Boolean" { $body = '{
+                             "enforceUniqueValues": false,
+                             "hidden": false,
+                             "indexed": false,
+                             "name":  "'   +  $columnName   +   '",
+                             "boolean": {}
+                             }'
+                  }
+      "Number" { $body  =  '{
+                             "enforceUniqueValues": false,
+                             "hidden": false,
+                             "indexed": false,
+                            "name": "'   + $columnName    +   '", 
+                            "number": {
+                                        "decimalPlaces": 0,
+                                        "minimum": 0,
+                                        "maximum": 10000
+                                      }
+                             }'
+                  }
       "multilineText" { $body = '{
                           "enforceUniqueValues": false,
                           "hidden": false,
