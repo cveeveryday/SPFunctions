@@ -447,9 +447,9 @@ function Get-SPListItems {
     [String]$siteName,
     [Parameter(Mandatory = $true)]
     [String]$listName,
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $false)]
     [String]$ColumnName,
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $false)]
     [String]$Filter
   )
 
@@ -465,14 +465,15 @@ $authHeader = @{
   'Authorization'="Bearer $accessToken" 
  }
 $uri = "https://graph.microsoft.com/v1.0/sites/" +  $list.parentreference.siteid + "/lists/"  + $list.id  + "/items"
-
-$params = @{
-  "filter"= "fields/"+ $ColumnName + " eq '" + $filter + "'"
-  "Prefer"= "HonorNonIndexedQueriesWarningMayFailRandomly"
+if ($ColumnName -and $filter)
+{
+  $params = @{
+    "filter"= "fields/"+ $ColumnName + " eq '" + $filter + "'"
+    "Prefer"= "HonorNonIndexedQueriesWarningMayFailRandomly"
+  }
 }
 $response = Invoke-RestMethod -Uri $uri   -Headers $authHeader -Method GET  -Body $params  -ContentType 'application/json'
 $response.value
-
 }
 
 function Get-SPListItem {
